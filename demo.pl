@@ -20,6 +20,7 @@ show %hash{a};
 show %hash{a=>'b'};
 show %hash{'a','z'};
 show %hash{qw(a z)};
+show %hash<<a z>>;
 
 show @array[1];
 show @array[1..3];
@@ -29,7 +30,10 @@ show $hashref{a};
 show $hashref{a=>'b'};
 show $hashref{'a','z'};
 show $hashref.{qw(a z)};
+show $hashref<<a z>>;
+show $hashref.<<a z>>;
 
 show $arrayref[1];
 show $arrayref[1..3];
 show $arrayref.[@array];
+

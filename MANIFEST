@@ -5,3 +5,4 @@ README
 lib/Perl6/Variables.pm
 demo.pl
 test.pl
+META.yml                                 Module meta-data (added by MakeMaker)
