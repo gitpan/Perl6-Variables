@@ -1,12 +1,12 @@
 package Perl6::Variables;
-$VERSION = '0.02_001'; 
+$VERSION = '0.02_002'; 
 use Filter::Simple;
 
 my $ident = qr/ [_a-z] \w* (?: :: [_a-z] \w* )* /ix;
 my $listlikely = qr/ (?: \.\. | => | , | qw | \@ $ident \b [^[] ) /x;
 my $alist = qr/ [^]]* $listlikely /x;
 my $hlist = qr/ [^}]* $listlikely /x;
-my $clist = qr/ [^>]* /x;
+my $clist = qr/ [^>]+ /x;
 
 FILTER {
 
@@ -27,18 +27,21 @@ FILTER {
         # hash reference constant slice
         m/\G \$ ($ident) \.? << (?=$clist) /sxgc and do {
                 my $varname = $1;
-                my $quotedwords = $2;
                 m/\G (.*?) >> /sxgc;
+                my $quotedwords = $1;
+                my $requotedwords = "'" . join("', '", split /\s+/, $quotedwords) . "'";
+#warn "debug: quotedwords: $quotedwords\n";
+#warn "debug: requotedwords: $requotedwords\n";
                 if($quotedwords =~ /\s/) {
-                    # $hashref->{foo}
-                    # warn 'hash reference constant non-slice: ' .  '# $' . $varname . '->{q<' . $1 . '>}';
-                    $text .=  '$' . $varname . '->{q<' . $1 . '>}';
-                } else {
                     # @{$hashref}{foo, bar};
-                    # warn 'hash reference constant slice: ' .  '# @{$' . $varname . '}{qw<' . $1 . '>}';
-                    $text .=  '@{$' . $varname . '}{qw<' . $1 . '>}';
+#warn 'hash reference constant slice: ' .  '@{$' . $varname . '}{' . $requotedwords . '}';
+                    $text .=  '@{$' . $varname . '}{' . $requotedwords . '}';
+                } else {
+                    # $hashref->{foo}
+#warn 'hash reference constant non-slice: ' .  '$' . $varname . '->{q<' . $quotedwords . '>}';
+                    $text .=  '$' . $varname . '->{q<' . $quotedwords . '>}';
                 }
-                next;
+                goto chain;
         };
 
         # hash reference slice
@@ -64,12 +67,14 @@ FILTER {
         # hash constant slice
         m/\G \% ($ident) << (?=$clist) /sxgc and do {
                 my $varname = $1;
-                my $quotedwords = $2;
                 m/\G (.*?) >> /sxgc;
+                my $quotedwords = $1;
+                my $requotedwords = "'" . join("', '", split /\s+/, $quotedwords) . "'";
+#warn "debug: quotedwords: $quotedwords\n";
+#warn "debug: requotedwords: $requotedwords\n";
                 # $hash{foo} or @hash{foo, bar}
-                # warn "debug: hash constant slice: " . (split(/\s+/, $quotedwords) == 1 ? '$' : '@') . $varname . '{qw<' . $1 . '>}';
-                $text .= ($quotedwords =~ /\s/ ? '$' : '@') . $varname . '{qw<' . $1 . '>}';
-                next;
+                $text .= ($quotedwords =~ /\s/ ? '@' : '$') . $varname . '{' . $requotedwords . '}';
+                goto chain;
         };
 
         # hash slice
@@ -86,6 +91,17 @@ FILTER {
 
         m/\G ([^\$\@%]+|.) /xgcs and
                 $text .= $1;
+
+        next;
+
+        chain:
+
+            if(m/\G << ($ident) >> /sxgc) {
+                $text .= "{'" . $1 . "'}";
+                goto chain;
+            }
+
+        next;
 
     }
     $_ = $text . substr($_, pos);

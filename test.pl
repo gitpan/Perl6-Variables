@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..22\n"; }
+BEGIN { $| = 1; print "1..23\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Perl6::Variables;
 $loaded = 1;
@@ -22,7 +22,7 @@ sub ok {
 	print "ok $count\n";
 }
 
-my %hash = (a=>1, b=>2, z=>26);
+my %hash = (a=>1, b=>2, z=>26, f=>{g=>5});
 my @array = (0..10);
 sub zee { 'z' }
 
@@ -58,4 +58,7 @@ ok $arrayref[1];
 ok $arrayref[1..3]==3;
 ok $arrayref.[@array]==10;
 
+# print STDERR q{ %hash<<f>><<g>> \n};
+# print STDERR q{ %hash{'f'}{'g'} \n};
+ok q{ %hash<<f>><<g>> } eq q{ %hash{'f'}{'g'} };
 
